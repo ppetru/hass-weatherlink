@@ -1,6 +1,7 @@
 from typing import Optional
 
-from . import units
+from homeassistant.const import UnitOfTemperature
+
 from .api.conditions import CurrentConditions, MoistureCondition
 from .const import DECIMALS_LEAF_WETNESS, DECIMALS_SOIL_MOISTURE
 from .sensor_common import WeatherLinkSensor, round_optional
@@ -30,7 +31,7 @@ class MoistureSensor(WeatherLinkSensor, abc=True):
 class MoistureStatus(
     MoistureSensor,
     sensor_name="Moisture Status",
-    unit_of_measurement=None,
+    native_unit_of_measurement=None,
     device_class=None,
 ):
     @property
@@ -59,7 +60,7 @@ class SoilMoistureABC(MoistureSensor, abc=True):
     def __init_subclass__(cls, *, sensor_id: int, **kwargs) -> None:
         super().__init_subclass__(
             sensor_name=f"Soil Moisture {sensor_id}",
-            unit_of_measurement="cb",
+            native_unit_of_measurement="cb",
             device_class=None,
             **kwargs,
         )
@@ -100,7 +101,7 @@ class SoilTemperatureABC(MoistureSensor, abc=True):
     def __init_subclass__(cls, *, sensor_id: int, **kwargs) -> None:
         super().__init_subclass__(
             sensor_name=f"Soil Temperature {sensor_id}",
-            unit_of_measurement=units.Temperature,
+            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
             device_class="temperature",
             **kwargs,
         )
@@ -120,10 +121,8 @@ class SoilTemperatureABC(MoistureSensor, abc=True):
         return getattr(c, f"temp_{cls._sensor_id}")
 
     @property
-    def state(self):
-        return self.units.temperature.convert_optional(
-            self._temp(self._moisture_condition)
-        )
+    def native_value(self):
+        return self._temp(self._moisture_condition)
 
 
 SOIL_TEMPERATURE_CLS = tuple(
@@ -138,7 +137,7 @@ class LeafABC(MoistureSensor, abc=True):
     def __init_subclass__(cls, *, sensor_id: int, **kwargs) -> None:
         super().__init_subclass__(
             sensor_name=f"Leaf {sensor_id}",
-            unit_of_measurement="%",
+            native_unit_of_measurement="%",
             device_class=None,
             **kwargs,
         )

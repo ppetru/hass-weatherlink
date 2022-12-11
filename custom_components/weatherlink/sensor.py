@@ -1,4 +1,9 @@
-from . import WeatherLinkCoordinator, units
+from homeassistant.const import (
+    UnitOfPressure,
+    UnitOfTemperature,
+)
+
+from . import WeatherLinkCoordinator
 from .api.conditions import LssBarCondition, LssTempHumCondition
 from .const import DECIMALS_HUMIDITY, DOMAIN
 from .sensor_air_quality import *
@@ -16,8 +21,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
 class Pressure(
     WeatherLinkSensor,
     sensor_name="Pressure",
-    unit_of_measurement=units.Pressure,
+    native_unit_of_measurement=UnitOfPressure.HPA,
     device_class="pressure",
+    state_class="measurement",
     required_conditions=(LssBarCondition,),
 ):
     @property
@@ -25,24 +31,24 @@ class Pressure(
         return self._conditions[LssBarCondition]
 
     @property
-    def state(self):
-        return self.units.pressure.convert(self._lss_bar_condition.bar_sea_level)
+    def native_value(self):
+        return self._lss_bar_condition.bar_sea_level
 
     @property
     def extra_state_attributes(self):
         condition = self._lss_bar_condition
-        u = self.units.pressure
         return {
-            "trend": u.convert_optional(condition.bar_trend),
-            "absolute": u.convert(condition.bar_absolute),
+            "trend": condition.bar_trend,
+            "absolute": condition.bar_absolute,
         }
 
 
 class InsideTemp(
     WeatherLinkSensor,
     sensor_name="Inside Temperature",
-    unit_of_measurement=units.Temperature,
+    native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     device_class="temperature",
+    state_class="measurement",
     required_conditions=(LssTempHumCondition,),
 ):
     @property
@@ -50,24 +56,24 @@ class InsideTemp(
         return self._conditions[LssTempHumCondition]
 
     @property
-    def state(self):
-        return self.units.temperature.convert(self._lss_temp_hum_condition.temp_in)
+    def native_value(self):
+        return self._lss_temp_hum_condition.temp_in
 
     @property
     def extra_state_attributes(self):
         condition = self._lss_temp_hum_condition
-        u = self.units.temperature
         return {
-            "dew_point": u.convert(condition.dew_point_in),
-            "heat_index": u.convert(condition.heat_index_in),
+            "dew_point": condition.dew_point_in,
+            "heat_index": condition.heat_index_in,
         }
 
 
 class InsideHum(
     WeatherLinkSensor,
     sensor_name="Inside Humidity",
-    unit_of_measurement="%",
+    native_unit_of_measurement="%",
     device_class="humidity",
+    state_class="measurement",
     required_conditions=(LssTempHumCondition,),
 ):
     @property

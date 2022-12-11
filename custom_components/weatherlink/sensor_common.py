@@ -4,7 +4,6 @@ from typing import Iterable, Iterator, List, Optional, Type, Union
 
 from . import WeatherLinkCoordinator, WeatherLinkEntity
 from .api.conditions import ConditionRecord, CurrentConditions
-from .units import Measurement
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +16,9 @@ class WeatherLinkSensor(WeatherLinkEntity):
         cls,
         *,
         sensor_name: str,
-        unit_of_measurement: Union[str, Type[Measurement], None],
+        native_unit_of_measurement: str,
         device_class: Optional[str],
+        state_class: Optional[str],
         required_conditions: Iterable[Type[ConditionRecord]] = None,
         **kwargs,
     ) -> None:
@@ -43,15 +43,17 @@ class WeatherLinkSensor(WeatherLinkEntity):
             return
 
         sensor_name = kwargs.pop("sensor_name")
-        unit_of_measurement = kwargs.pop("unit_of_measurement")
+        native_unit_of_measurement = kwargs.pop("native_unit_of_measurement")
         device_class = kwargs.pop("device_class")
+        state_class = kwargs.pop("state_class", None)
         required_conditions = kwargs.pop("required_conditions", None)
 
         super().__init_subclass__(**kwargs)
 
         cls._sensor_name = sensor_name
-        cls._unit_of_measurement = unit_of_measurement
+        cls._native_unit_of_measurement = native_unit_of_measurement
         cls._device_class = device_class
+        cls._state_class = state_class
         try:
             requirements = cls._required_conditions
         except AttributeError:
@@ -87,16 +89,16 @@ class WeatherLinkSensor(WeatherLinkEntity):
         return f"{self.coordinator.device_model_name} {self._sensor_name}"
 
     @property
-    def unit_of_measurement(self):
-        unit = self._unit_of_measurement
-        if unit is None or isinstance(unit, str):
-            return unit
-
-        return self.units.by_measurement(unit).info.unit_of_measurement
+    def native_unit_of_measurement(self):
+        return self._native_unit_of_measurement
 
     @property
     def device_class(self):
         return self._device_class
+
+    @property
+    def state_class(self):
+        return self._state_class
 
 
 def round_optional(
